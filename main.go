@@ -12,6 +12,19 @@ var (
 	mu sync.RWMutex
 )
 
+func userExists(uname string) bool {
+	mu.RLock()
+	_, exists := userData[uname]
+	mu.RUnlock()
+	return exists
+}
+
+func makeNewUser(uname string, pass string) {
+	mu.Lock()
+	userData[uname] = pass
+	mu.Unlock()
+}
+
 func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
@@ -20,17 +33,29 @@ func main() {
 	r.POST("/register", func(c *gin.Context) {
 		uname := c.PostForm("username")
 		pass := c.PostForm("password")
-		mu.RLock()
-		_, exists := userData[uname]
-		mu.RUnlock()
-		if exists {
+		if userExists(uname) {
 			c.String(http.StatusConflict, "Username already exists!")
 			return
 		}
-		mu.Lock()
-		userData[uname] = pass
-		mu.Unlock()
+		makeNewUser(uname, pass)
 		c.String(http.StatusOK, "User Created!")
 	})
+
+	r.POST("/login", func(c *gin.Context) {
+		uname := c.PostForm("username")
+		pass := c.PostForm("password")
+		if userExists(uname) {
+			mu.RLock()
+			if userData[uname] == pass{
+				c.String(http.StatusOK, "Login Successful.")
+			}else {
+				c.String(http.StatusConflict, "Bad Login.")
+			}
+			mu.RUnlock()
+		} else {
+			c.String(http.StatusUnauthorized, "Bad Credentials.")
+		}
+	})
+
 	r.Run()
 }
