@@ -48,6 +48,8 @@ func main() {
 			mu.RLock()
 			if userData[uname] == pass{
 				c.String(http.StatusOK, "Login Successful.")
+				c.SetCookie("username", uname, 3600, "/", "localhost", false, true)
+				c.SetCookie("password", pass, 3600, "/", "localhost", false, true)
 			}else {
 				c.String(http.StatusConflict, "Bad Login.")
 			}
