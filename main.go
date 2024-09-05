@@ -47,9 +47,9 @@ func main() {
 		if userExists(uname) {
 			mu.RLock()
 			if userData[uname] == pass{
-				c.String(http.StatusOK, "Login Successful.")
 				c.SetCookie("username", uname, 3600, "/", "localhost", false, true)
 				c.SetCookie("password", pass, 3600, "/", "localhost", false, true)
+				c.Redirect(http.StatusPermanentRedirect, "/user/"+uname)
 			}else {
 				c.String(http.StatusConflict, "Bad Login.")
 			}
@@ -57,6 +57,28 @@ func main() {
 		} else {
 			c.String(http.StatusUnauthorized, "Bad Credentials.")
 		}
+	})
+
+	r.GET("/user/:username", func(c *gin.Context){
+		uname := c.Param("username")
+		cache_name, err := c.Cookie("username")
+		if err != nil{
+			c.String(http.StatusUnauthorized, "Can't view without login")
+			return
+		}
+		if uname != cache_name{
+			c.String(http.StatusUnauthorized, "Can't view without login")
+			return
+		}
+		mu.RLock()
+		val, isValid := userData[uname]
+		cache_pass, err1 := c.Cookie("password")
+		if err1 != nil || !isValid || val != cache_pass {
+			c.String(http.StatusUnauthorized, "Can't view without login")
+			return
+		}
+		c.String(200, "Login as " + uname)
+		mu.RUnlock()
 	})
 
 	r.Run()
