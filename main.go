@@ -25,6 +25,16 @@ func makeNewUser(uname string, pass string) {
 	mu.Unlock()
 }
 
+func isValidUser(uname string, pass string) bool{
+	mu.RLock()
+	val, isValid := userData[uname]
+	mu.RUnlock()
+	if !isValid{
+		return false
+	}
+	return val == pass
+}
+
 func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
@@ -74,11 +84,26 @@ func main() {
 		val, isValid := userData[uname]
 		cache_pass, err1 := c.Cookie("password")
 		if err1 != nil || !isValid || val != cache_pass {
+			mu.RLock()
 			c.String(http.StatusUnauthorized, "Can't view without login")
 			return
 		}
 		c.String(200, "Login as " + uname)
 		mu.RUnlock()
+	})
+
+	r.POST("/upload", func(c *gin.Context){
+		uname, err1 := c.Cookie("username")
+		pass, err2 := c.Cookie("password")
+		if err1 != nil || err2 != nil || !isValidUser(uname, pass){
+			c.String(http.StatusUnauthorized, "Bad Credentials")
+		}
+		file, err := c.FormFile("file")
+		if err != nil{
+			c.String(http.StatusBadRequest, "File could not be opened.")
+			return
+		}
+		c.SaveUploadedFile(file, "uploads/"+uname+"/"+file.Filename)
 	})
 
 	r.Run()
