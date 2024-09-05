@@ -97,6 +97,7 @@ func main() {
 		pass, err2 := c.Cookie("password")
 		if err1 != nil || err2 != nil || !isValidUser(uname, pass){
 			c.String(http.StatusUnauthorized, "Bad Credentials")
+			return
 		}
 		file, err := c.FormFile("file")
 		if err != nil{
@@ -104,7 +105,26 @@ func main() {
 			return
 		}
 		c.SaveUploadedFile(file, "uploads/"+uname+"/"+file.Filename)
+		c.String(http.StatusOK, "File Successfuly Uploaded to: " + "uploads/"+uname+"/"+file.Filename)
 	})
-
+	r.GET("/uploads/:username/:filename", func(c *gin.Context){
+		uname, err1 := c.Cookie("username")
+		pass, err2 := c.Cookie("password")
+		if err1 != nil || err2 != nil{
+			c.String(http.StatusUnauthorized, "Please Login.")
+			return
+		}
+		paramUserName := c.Param("username")
+		if uname != paramUserName{
+			c.String(http.StatusUnauthorized, "Bad Login.")
+			return
+		}
+		if !isValidUser(uname, pass){
+			c.String(http.StatusUnauthorized, "Bad Login.")
+			return
+		}
+		paramFileName := c.Param("filename")
+		c.File("./uploads/"+uname+"/"+paramFileName)
+	})
 	r.Run()
 }
