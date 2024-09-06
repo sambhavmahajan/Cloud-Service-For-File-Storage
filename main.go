@@ -142,5 +142,26 @@ func main() {
 		paramFileName := c.Param("filename")
 		c.File("./uploads/" + uname + "/" + paramFileName)
 	})
+	r.GET("/fetchUploadList", func(c *gin.Context){
+		uname, err1 := c.Cookie("username")
+		upass, err2 := c.Cookie("password")
+		if err1 != nil || err2 != nil {
+			c.String(http.StatusUnauthorized, "Please Login.")
+			return
+		}
+		if !isValidUser(uname, upass) {
+			c.String(http.StatusUnauthorized, "Bad Login.")
+			return
+		}
+		mu.RLock()
+		sli, valid := usernameToLinks[uname]
+		mu.RUnlock()
+		if !valid{
+			c.JSON(http.StatusOK, nil)
+			return
+		}
+		c.JSON(http.StatusOK, sli)
+		
+	})
 	r.Run()
 }
