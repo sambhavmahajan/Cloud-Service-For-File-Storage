@@ -35,6 +35,33 @@ func isValidUser(uname string, pass string) bool {
 	return val == pass
 }
 
+func mainPage(c *gin.Context){
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil {
+		c.HTML(200, "login.html", nil)
+		return
+	}
+	if !isValidUser(uname, upass){
+		c.HTML(http.StatusUnauthorized, "login.html", nil)
+		return
+	}
+	mu.RLock()
+	sli, _ := usernameToLinks[uname]
+	c.HTML(200, "user.html", gin.H{
+		"username" : uname,
+		"Items" : sli,
+	})
+}
+
+func main() {
+	router := gin.Default()
+	router.LoadHTMLGlob("static/*")
+	router.GET("/", mainPage)
+	router.Run()
+}
+
+/*obsolete
 func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
@@ -165,3 +192,4 @@ func main() {
 	})
 	r.Run()
 }
+*/
