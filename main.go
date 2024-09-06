@@ -37,116 +37,108 @@ func isValidUser(uname string, upass string) bool {
 	return val == upass
 }
 
-func registerPage(c *gin.Context){
-	c.HTML(200, "register.html", nil)
+func registerPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "register.html", nil)
 }
 
 func registerAPI(c *gin.Context) {
 	uname := c.PostForm("username")
 	upass := c.PostForm("password")
 	if isValidUser(uname, upass) {
-		c.Redirect(http.StatusMovedPermanently, "register")
+		c.Redirect(http.StatusFound, "/register")
 		return
 	}
 	mu.Lock()
 	userData[uname] = upass
-	usernameToLinks[uname] = make([]string, 0, 0)
+	usernameToLinks[uname] = make([]string, 0)
 	mu.Unlock()
 	c.SetCookie("username", uname, 3600, "/", "", false, true)
 	c.SetCookie("password", upass, 3600, "/", "", false, true)
-	c.Redirect(http.StatusMovedPermanently, "user")
+	c.Redirect(http.StatusFound, "/user")
 }
 
-func loginPage(c *gin.Context){
-	c.HTML(200, "login.html", nil)
+func loginPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "login.html", nil)
 }
 
-func loginAPI(c *gin.Context){
-	uname:= c.PostForm("username")
+func loginAPI(c *gin.Context) {
+	uname := c.PostForm("username")
 	upass := c.PostForm("password")
-	if !isValidUser(uname, upass){
-		c.String(400, "Invalid credentials!")
-		time.Sleep(2*time.Second)
-		c.Redirect(http.StatusMovedPermanently, "login")
+	if !isValidUser(uname, upass) {
+		c.String(http.StatusUnauthorized, "Invalid credentials!")
+		time.Sleep(2 * time.Second)
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 	c.SetCookie("username", uname, 3600, "/", "", false, true)
 	c.SetCookie("password", upass, 3600, "/", "", false, true)
-	c.Redirect(http.StatusMovedPermanently, "user")
+	c.Redirect(http.StatusFound, "/user")
 }
 
-func userAPI(c *gin.Context){
+func userAPI(c *gin.Context) {
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
-	if err1 != nil || err2 != nil{
-		c.Redirect(http.StatusMovedPermanently, "login")
-		return
-	}
-	if !isValidUser(uname, upass){
-		c.Redirect(http.StatusMovedPermanently, "login")
+	if err1 != nil || err2 != nil || !isValidUser(uname, upass) {
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 	mu.RLock()
 	sli, _ := usernameToLinks[uname]
 	mu.RUnlock()
-	c.HTML(http.StatusMovedPermanently,"user.html", gin.H{
+	c.HTML(http.StatusOK, "user.html", gin.H{
 		"username": uname,
-		"Items" : sli,
+		"Items":    sli,
 	})
 }
 
-func logout(c *gin.Context){
+func logout(c *gin.Context) {
 	c.SetCookie("username", "", -1, "/", "", false, true)
 	c.SetCookie("password", "", -1, "/", "", false, true)
-	c.Redirect(http.StatusMovedPermanently, "login")
+	c.Redirect(http.StatusFound, "/login")
 }
 
-func mainPage(c *gin.Context){
+func mainPage(c *gin.Context) {
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
-	if err1 != nil || err2 != nil {
-		c.HTML(http.StatusMovedPermanently, "login.html", nil)
-		return
-	}
-	if !isValidUser(uname, upass){
+	if err1 != nil || err2 != nil || !isValidUser(uname, upass) {
 		c.HTML(http.StatusUnauthorized, "login.html", nil)
 		return
 	}
 	mu.RLock()
 	sli, _ := usernameToLinks[uname]
 	mu.RUnlock()
-	c.HTML(http.StatusMovedPermanently, "user.html", gin.H{
-		"username" : uname,
-		"Items" : sli,
+	c.HTML(http.StatusOK, "user.html", gin.H{
+		"username": uname,
+		"Items":    sli,
 	})
 }
 
-func upload(c *gin.Context){
+func upload(c *gin.Context) {
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
-	if err1 != nil || err2 != nil || !isValidUser(uname, upass){
+	if err1 != nil || err2 != nil || !isValidUser(uname, upass) {
 		c.HTML(http.StatusUnauthorized, "login.html", nil)
 		return
 	}
 	file, err := c.FormFile("file")
-	if err == nil{
-		c.SaveUploadedFile(file, "users/" + uname + "/" + file.Filename)
+	if err == nil {
+		c.SaveUploadedFile(file, "users/"+uname+"/"+file.Filename)
 		mu.Lock()
 		sli, _ := usernameToLinks[uname]
 		usernameToLinks[uname] = append(sli, file.Filename)
 		mu.Unlock()
-		c.Redirect(http.StatusMovedPermanently, "/user")
+		c.Redirect(http.StatusFound, "/user")
 		return
 	}
-	c.Redirect(http.StatusMovedPermanently, "/user")
+	c.Redirect(http.StatusFound, "/user")
 }
 
-func download(c *gin.Context){
+func download(c *gin.Context) {
 	filename := c.Param("filename")
 	cookie_uname, err1 := c.Cookie("username")
 	cookie_upass, err2 := c.Cookie("password")
-	if err1 != nil || err2 != nil || !isValidUser(cookie_uname, cookie_upass){
-		c.HTML(http.StatusMovedPermanently, "login.html", nil)
+	if err1 != nil || err2 != nil || !isValidUser(cookie_uname, cookie_upass) {
+		c.HTML(http.StatusUnauthorized, "login.html", nil)
 		return
 	}
 	if _, err := os.Stat("users/" + cookie_uname + "/" + filename); err == nil {
@@ -170,6 +162,7 @@ func main() {
 	router.GET("/user/:filename", download)
 	router.Run()
 }
+
 
 /*obsolete
 func main() {
