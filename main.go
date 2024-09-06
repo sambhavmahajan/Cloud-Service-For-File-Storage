@@ -62,6 +62,16 @@ func loginPage(c *gin.Context){
 	c.HTML(200, "login.html", nil)
 }
 
+func loginAPI(c *gin.Context){
+	uname := c.PostForm("username")
+	upass := c.PostForm("password")
+	if !isValidUser(uname, upass){
+		c.String(400, "Invalid credentials!")
+		time.Sleep(2*time.Second)
+		c.Redirect(http.StatusMovedPermanently, "login")
+	}
+}
+
 func mainPage(c *gin.Context){
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
@@ -88,6 +98,7 @@ func main() {
 	router.GET("/register", registerPage)
 	router.POST("/register", registerAPI)
 	router.GET("/login", loginPage)
+	router.POST("/login", loginAPI)
 	router.Run()
 }
 
