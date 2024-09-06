@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
@@ -19,24 +20,42 @@ func userExists(uname string) bool {
 	return exists
 }
 
-func makeNewUser(uname string, pass string) {
+func makeNewUser(uname string, upass string) {
 	mu.Lock()
-	userData[uname] = pass
+	userData[uname] = upass
 	mu.Unlock()
 }
 
-func isValidUser(uname string, pass string) bool {
+func isValidUser(uname string, upass string) bool {
 	mu.RLock()
 	val, isValid := userData[uname]
 	mu.RUnlock()
 	if !isValid {
 		return false
 	}
-	return val == pass
+	return val == upass
 }
 
 func registerPage(c *gin.Context){
 	c.HTML(200, "register.html", nil)
+}
+
+func registerAPI(c *gin.Context) {
+	uname := c.PostForm("username")
+	upass := c.PostForm("password")
+	if isValidUser(uname, upass) {
+		c.String(http.StatusConflict, "Username already exists!")
+		time.Sleep(2*time.Second)
+		c.Redirect(http.StatusMovedPermanently, "register")
+		return
+	}
+	mu.RLock()
+	userData[uname] = upass
+	usernameToLinks[uname] = make([]string, 0, 0)
+	c.SetCookie("username", uname, 3600, "/", "", false, true)
+	c.SetCookie("password", upass, 3600, "/", "", false, true)
+	mu.RUnlock()
+	c.Redirect(http.StatusMovedPermanently, "user")
 }
 
 func loginPage(c *gin.Context){
@@ -67,6 +86,7 @@ func main() {
 	router.LoadHTMLGlob("static/*")
 	router.GET("/", mainPage)
 	router.GET("/register", registerPage)
+	router.POST("/register", registerAPI)
 	router.GET("/login", loginPage)
 	router.Run()
 }
