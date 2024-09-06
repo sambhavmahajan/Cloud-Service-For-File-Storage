@@ -1,6 +1,6 @@
 module github.com/sambhavmahajan/Cloud-Service-For-File-Storage
 
-go 1.23.0
+go 1.21.0
 
 require (
 	github.com/bytedance/sonic v1.12.2 // indirect
