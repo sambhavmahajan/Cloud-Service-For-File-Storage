@@ -69,7 +69,10 @@ func loginAPI(c *gin.Context){
 		c.String(400, "Invalid credentials!")
 		time.Sleep(2*time.Second)
 		c.Redirect(http.StatusMovedPermanently, "login")
+		return
 	}
+	c.SetCookie("username", uname, 3600, "/", "", false, true)
+	c.SetCookie("password", upass, 3600, "/", "", false, true)
 }
 
 func mainPage(c *gin.Context){
