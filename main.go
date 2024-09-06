@@ -35,6 +35,14 @@ func isValidUser(uname string, pass string) bool {
 	return val == pass
 }
 
+func registerPage(c *gin.Context){
+	c.HTML(200, "register.html", nil)
+}
+
+func loginPage(c *gin.Context){
+	c.HTML(200, "login.html", nil)
+}
+
 func mainPage(c *gin.Context){
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
@@ -58,6 +66,8 @@ func main() {
 	router := gin.Default()
 	router.LoadHTMLGlob("static/*")
 	router.GET("/", mainPage)
+	router.GET("/register", registerPage)
+	router.GET("/login", loginPage)
 	router.Run()
 }
 
