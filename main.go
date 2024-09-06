@@ -63,11 +63,8 @@ func loginPage(c *gin.Context){
 }
 
 func loginAPI(c *gin.Context){
-	uname, err1 := c.Cookie("username")
-	upass, err2 := c.Cookie("password")
-	if err1 != nil || err2 != nil{
-		c.Redirect(http.StatusMovedPermanently, "login")
-	}
+	uname:= c.PostForm("username")
+	upass := c.PostForm("password")
 	if !isValidUser(uname, upass){
 		c.String(400, "Invalid credentials!")
 		time.Sleep(2*time.Second)
@@ -76,6 +73,27 @@ func loginAPI(c *gin.Context){
 	}
 	c.SetCookie("username", uname, 3600, "/", "", false, true)
 	c.SetCookie("password", upass, 3600, "/", "", false, true)
+	c.Redirect(http.StatusMovedPermanently, "user")
+}
+
+func userAPI(c *gin.Context){
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil{
+		c.Redirect(http.StatusMovedPermanently, "login")
+		return
+	}
+	if !isValidUser(uname, upass){
+		c.Redirect(http.StatusMovedPermanently, "login")
+		return
+	}
+	mu.RLock()
+	sli, _ := usernameToLinks[uname]
+	mu.RUnlock()
+	c.HTML(http.StatusMovedPermanently,"user.html", gin.H{
+		"username": uname,
+		"Items" : sli,
+	})
 }
 
 func mainPage(c *gin.Context){
@@ -91,6 +109,7 @@ func mainPage(c *gin.Context){
 	}
 	mu.RLock()
 	sli, _ := usernameToLinks[uname]
+	mu.RUnlock()
 	c.HTML(200, "user.html", gin.H{
 		"username" : uname,
 		"Items" : sli,
@@ -105,6 +124,7 @@ func main() {
 	router.POST("/register", registerAPI)
 	router.GET("/login", loginPage)
 	router.POST("/login", loginAPI)
+	router.GET("/user", userAPI)
 	router.Run()
 }
 
