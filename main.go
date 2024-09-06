@@ -44,17 +44,15 @@ func registerAPI(c *gin.Context) {
 	uname := c.PostForm("username")
 	upass := c.PostForm("password")
 	if isValidUser(uname, upass) {
-		c.String(http.StatusConflict, "Username already exists!")
-		time.Sleep(2*time.Second)
 		c.Redirect(http.StatusMovedPermanently, "register")
 		return
 	}
-	mu.RLock()
+	mu.Lock()
 	userData[uname] = upass
 	usernameToLinks[uname] = make([]string, 0, 0)
+	mu.Unlock()
 	c.SetCookie("username", uname, 3600, "/", "", false, true)
 	c.SetCookie("password", upass, 3600, "/", "", false, true)
-	mu.RUnlock()
 	c.Redirect(http.StatusMovedPermanently, "user")
 }
 
@@ -106,7 +104,7 @@ func mainPage(c *gin.Context){
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
 	if err1 != nil || err2 != nil {
-		c.HTML(200, "login.html", nil)
+		c.HTML(http.StatusMovedPermanently, "login.html", nil)
 		return
 	}
 	if !isValidUser(uname, upass){
@@ -116,10 +114,30 @@ func mainPage(c *gin.Context){
 	mu.RLock()
 	sli, _ := usernameToLinks[uname]
 	mu.RUnlock()
-	c.HTML(200, "user.html", gin.H{
+	c.HTML(http.StatusMovedPermanently, "user.html", gin.H{
 		"username" : uname,
 		"Items" : sli,
 	})
+}
+
+func upload(c *gin.Context){
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil || !isValidUser(uname, upass){
+		c.HTML(http.StatusUnauthorized, "login.html", nil)
+		return
+	}
+	file, err := c.FormFile("file")
+	if err == nil{
+		c.SaveUploadedFile(file, "users/" + uname + "/" + file.Filename)
+		mu.Lock()
+		sli, _ := usernameToLinks[uname]
+		usernameToLinks[uname] = append(sli, file.Filename)
+		mu.Unlock()
+		c.Redirect(http.StatusMovedPermanently, "/user")
+		return
+	}
+	c.Redirect(http.StatusMovedPermanently, "/user")
 }
 
 func main() {
@@ -132,6 +150,7 @@ func main() {
 	router.POST("/login", loginAPI)
 	router.GET("/user", userAPI)
 	router.GET("/logout", logout)
+	router.POST("/upload", upload)
 	router.Run()
 }
 
