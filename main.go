@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
@@ -57,8 +58,8 @@ func main() {
 		if userExists(uname) {
 			mu.RLock()
 			if userData[uname] == pass {
-				c.SetCookie("username", uname, 3600, "/", "localhost", false, true)
-				c.SetCookie("password", pass, 3600, "/", "localhost", false, true)
+				c.SetCookie("username", uname, 3600, "/", "", true, true)
+				c.SetCookie("password", pass, 3600, "/", "", true, true)
 				c.Redirect(http.StatusPermanentRedirect, "/user/"+uname)
 			} else {
 				c.String(http.StatusConflict, "Bad Login.")
