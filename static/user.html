@@ -10,7 +10,7 @@
 <h1>{{ .username }}</h1>
 <ul>
 	{{range .Items}}
-        <li>{{.}}</li>
+        <li><a href="user/{{.}}">{{.}}</a></li>
     {{end}}
 </ul>
 <h2>Upload</h2>

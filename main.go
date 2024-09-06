@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"os"
 )
 
 var (
@@ -140,6 +141,21 @@ func upload(c *gin.Context){
 	c.Redirect(http.StatusMovedPermanently, "/user")
 }
 
+func download(c *gin.Context){
+	filename := c.Param("filename")
+	cookie_uname, err1 := c.Cookie("username")
+	cookie_upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil || !isValidUser(cookie_uname, cookie_upass){
+		c.HTML(http.StatusMovedPermanently, "login.html", nil)
+		return
+	}
+	if _, err := os.Stat("users/" + cookie_uname + "/" + filename); err == nil {
+		c.File("users/" + cookie_uname + "/" + filename)
+		return
+	}
+	c.String(http.StatusNotFound, "File not found!")
+}
+
 func main() {
 	router := gin.Default()
 	router.LoadHTMLGlob("static/*")
@@ -151,6 +167,7 @@ func main() {
 	router.GET("/user", userAPI)
 	router.GET("/logout", logout)
 	router.POST("/upload", upload)
+	router.GET("/user/:filename", download)
 	router.Run()
 }
 
