@@ -63,8 +63,11 @@ func loginPage(c *gin.Context){
 }
 
 func loginAPI(c *gin.Context){
-	uname := c.PostForm("username")
-	upass := c.PostForm("password")
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil{
+		c.Redirect(http.StatusMovedPermanently, "login")
+	}
 	if !isValidUser(uname, upass){
 		c.String(400, "Invalid credentials!")
 		time.Sleep(2*time.Second)
