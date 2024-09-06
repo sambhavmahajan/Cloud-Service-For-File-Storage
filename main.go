@@ -96,6 +96,12 @@ func userAPI(c *gin.Context){
 	})
 }
 
+func logout(c *gin.Context){
+	c.SetCookie("username", "", -1, "/", "", false, true)
+	c.SetCookie("password", "", -1, "/", "", false, true)
+	c.Redirect(http.StatusMovedPermanently, "login")
+}
+
 func mainPage(c *gin.Context){
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
@@ -125,6 +131,7 @@ func main() {
 	router.GET("/login", loginPage)
 	router.POST("/login", loginAPI)
 	router.GET("/user", userAPI)
+	router.GET("/logout", logout)
 	router.Run()
 }
 
