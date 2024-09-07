@@ -38,6 +38,11 @@ func isValidUser(uname string, upass string) bool {
 }
 
 func registerPage(c *gin.Context) {
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 == nil && err2 == nil && isValidUser(uname, upass){
+		c.Redirect(http.StatusFound, "/user")
+	}
 	c.HTML(http.StatusOK, "register.html", nil)
 }
 
@@ -58,6 +63,12 @@ func registerAPI(c *gin.Context) {
 }
 
 func loginPage(c *gin.Context) {
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 == nil && err2 == nil && isValidUser(uname, upass){
+		c.Redirect(http.StatusFound, "/user")
+		return
+	}
 	c.HTML(http.StatusOK, "login.html", nil)
 }
 
