@@ -147,6 +147,41 @@ func download(c *gin.Context) {
 	}
 	c.String(http.StatusNotFound, "File not found!")
 }
+func deleteFromSlice(sli []string, val string) []string{
+	i := 0
+	n := len(sli)
+	for i < n{
+		if sli[i] == val{
+			break
+		}
+		i = i + 1
+	}
+	return append(sli[:i], sli[i+1:]...)
+	
+}
+func deleteFile(c *gin.Context){
+	if c.PostForm("_method") != "DELETE"{
+		c.String(http.StatusUnauthorized, "Error: bad Endpoint")
+		return
+	}
+	filename := c.Param("filename")
+	cookie_uname, unameErr := c.Cookie("username")
+	cookie_upass, upassErr := c.Cookie("password")
+	if unameErr != nil || upassErr != nil || !isValidUser(cookie_uname, cookie_upass){
+		c.HTML(http.StatusUnauthorized, "login.html", nil)
+		return
+	}
+	path := "users/" + cookie_uname + "/" + filename
+	if _, err := os.Stat(path); err != nil{
+		c.String(http.StatusNotFound, "File not found!")
+		return
+	}
+	os.Remove(path)
+	mu.Lock()
+	usernameToLinks[cookie_uname] = deleteFromSlice(usernameToLinks[cookie_uname], filename)
+	mu.Unlock()
+	c.Redirect(http.StatusFound, "/user")
+}
 
 func main() {
 	router := gin.Default()
@@ -160,6 +195,7 @@ func main() {
 	router.GET("/logout", logout)
 	router.POST("/upload", upload)
 	router.GET("/user/:filename", download)
+	router.POST("/delete/:filename", deleteFile)
 	router.Run()
 }
 
