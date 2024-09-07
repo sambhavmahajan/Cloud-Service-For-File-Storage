@@ -1,6 +1,6 @@
 ### Cloud Service For File Storage
 Hey, welcome to my repository.
-This is a basic cloud for file storage project written in golang (1.21.00) and gin. As you are observing, this is not the latest golang version, this is due to the deployment issues encountered during deploying using koyeb.
+This is a basic cloud service for file storage written in golang (1.21.00) and gin. As you are observing, this is not the latest golang version, this is due to the deployment issues encountered during deploying using koyeb.
 
 `Deployed At: https://cloudstorage-sambhavmahajan.koyeb.app`
 
@@ -11,7 +11,7 @@ This is a basic cloud for file storage project written in golang (1.21.00) and g
 - You may visit again and login.
 
 #### How to clone.
-- First ensure golang version 1.21.00(atleast is installed).
+- Ensure golang version 1.21.00(atleast) is installed.
 - Clone the repository: `git clone https://github.com/sambhavmahajan/Cloud-Service-For-File-Storage`
 - `go mod tidy` to install any dependencies, if gin is not installed it will automatically install it.
 - Set your own port and binding, modify router.Run(), default port is `8080` and default binding is `localhost`
