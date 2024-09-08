@@ -268,6 +268,9 @@ func main() {
 	router.GET("/form.css", func(c *gin.Context){
 		c.File("static/form.css")
 	})
+	router.GET("/user.css", func(c *gin.Context){
+		c.File("static/user.css")
+	})
 	router.Run()
 }
 

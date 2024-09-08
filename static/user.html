@@ -1,28 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" href="user.css">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title></title>
+	<title>{{ .username }}</title>
 </head>
 <body>
-<a href="logout">Logout</a>
-<h1>{{ .username }}</h1>
-<ul>
+<div id="header"W>
+	<h2 id="usernamemessage">{{ .username }}</h2>
+	<a id="logout" href="logout"><h2>Logout</h2></a>
+</div>
+<div id="upload">
+<h2>Upload</h2>
+<form action="/upload" method="POST" enctype="multipart/form-data">
+	<input id="file"type="file" name="file" required>
+	<button type="submit"> Upload</button>
+</form>
+</div>
+<br>
+<div id="filelist">
+<ol>
 	{{range .Items}}
         <li>
         	<form action="/delete/{{.}}" method="POST">
         	<a href="user/{{.}}">{{.}}</a>
-    		<input type="hidden" name="_method" value="DELETE">
+    		<input type="hidden" name="_method" value="DELETE"><br>
     		<button type="submit">Delete File</button>
 			</form>
         </li>
     {{end}}
-</ul>
-<h2>Upload</h2>
-<form action="/upload" method="POST" enctype="multipart/form-data">
-	<input type="file" name="file" required>
-	<button type="submit"> Upload</button>
-</form>
+</ol>
+</div>
 </body>
 </html>
