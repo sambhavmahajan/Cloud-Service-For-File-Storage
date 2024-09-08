@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" href="form.css">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title></title>
+	<title>login</title>
 </head>
 <body>
-	<form action = "/login" method = "POST">
-		<label>Username</label>
-		<input type="text" name="username" required>
-		<br>
-		<label>Password</label>
-		<input type="password" name="password" required>
-		<button type="submit">Login</button>
-	</form>
-	<a href = "register">Register Here</a>
+	<div>
+		<form action = "/login" method = "POST">
+			<input id="uname" type="text" name="username" placeholder="username" required><br>
+			<input id="upass" type="password" name="password" placeholder="password" required><br>
+			<button id="btn" type="submit">Login</button>
+		</form>
+		<a href = "register">Do not have an account? Register Here</a>
+	</div>
 </body>
 </html>
