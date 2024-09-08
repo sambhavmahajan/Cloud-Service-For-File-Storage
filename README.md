@@ -14,9 +14,13 @@ This is a basic cloud service for file storage written in golang (1.21.00) and g
 - Ensure golang version 1.21.00(atleast) is installed.
 - Clone the repository: `git clone https://github.com/sambhavmahajan/Cloud-Service-For-File-Storage`
 - `go mod tidy` to install any dependencies, if gin is not installed it will automatically install it.
+### How to configure
 - Set your own port and binding, modify router.Run(), default port is `8080` and default binding is `localhost`
   - Change Port: `router.Run(":9090")`
   - Change Bindng and Port: `router.Run("0.0.0.0:9090")`
+- Environment Variables:
+  - adminUname: admin username
+  - adminUpass: admin password
 - Visit `localhost:8080` or the appropriate binding and port.
 
 If you find this project cool enough, please consider starring it on GitHub :)\
