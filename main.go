@@ -14,6 +14,10 @@ var (
 	mu sync.RWMutex
 )
 
+func isAdmin(uname string, upass string) bool{
+	return uname == os.Getenv("adminUname") && upass == os.Getenv("adminUpass")
+}
+
 func userExists(uname string) bool {
 	mu.RLock()
 	_, exists := userData[uname]
@@ -42,6 +46,7 @@ func registerPage(c *gin.Context) {
 	upass, err2 := c.Cookie("password")
 	if err1 == nil && err2 == nil && isValidUser(uname, upass){
 		c.Redirect(http.StatusFound, "/user")
+		return
 	}
 	c.HTML(http.StatusOK, "register.html", nil)
 }
@@ -49,7 +54,7 @@ func registerPage(c *gin.Context) {
 func registerAPI(c *gin.Context) {
 	uname := c.PostForm("username")
 	upass := c.PostForm("password")
-	if isValidUser(uname, upass) {
+	if isValidUser(uname, upass) || isAdmin(uname, upass){
 		c.Redirect(http.StatusFound, "/register")
 		return
 	}
@@ -65,9 +70,17 @@ func registerAPI(c *gin.Context) {
 func loginPage(c *gin.Context) {
 	uname, err1 := c.Cookie("username")
 	upass, err2 := c.Cookie("password")
-	if err1 == nil && err2 == nil && isValidUser(uname, upass){
-		c.Redirect(http.StatusFound, "/user")
-		return
+	if err1 == nil && err2 == nil{
+		if isAdmin(uname, upass){
+			c.SetCookie("username", uname, 3600, "/", "", false, true)
+			c.SetCookie("password", upass, 3600, "/", "", false, true)
+			c.Redirect(http.StatusFound, "/admin")
+			return
+		}
+		if isValidUser(uname, upass) {
+			c.Redirect(http.StatusFound, "/user")
+			return
+		}
 	}
 	c.HTML(http.StatusOK, "login.html", nil)
 }
@@ -75,10 +88,14 @@ func loginPage(c *gin.Context) {
 func loginAPI(c *gin.Context) {
 	uname := c.PostForm("username")
 	upass := c.PostForm("password")
-	if !isValidUser(uname, upass) {
-		c.String(http.StatusUnauthorized, "Invalid credentials!")
+	if isAdmin(uname, upass){
+		c.Redirect(http.StatusFound, "/admin")
+		c.SetCookie("username", uname, 3600, "/", "", false, true)
+		c.SetCookie("password", upass, 3600, "/", "", false, true)
+		c.Redirect(http.StatusFound, "/admin")
+	}else if !isValidUser(uname, upass) {
 		time.Sleep(2 * time.Second)
-		c.Redirect(http.StatusFound, "/login")
+		c.String(http.StatusUnauthorized, "Invalid credentials!")
 		return
 	}
 	c.SetCookie("username", uname, 3600, "/", "", false, true)
@@ -194,6 +211,45 @@ func deleteFile(c *gin.Context){
 	c.Redirect(http.StatusFound, "/user")
 }
 
+func adminPage(c *gin.Context) {
+	uname, err1 := c.Cookie("username")
+	upass, err2 := c.Cookie("password")
+	if err1 != nil || err2 != nil {
+		c.String(http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	if isAdmin(uname, upass) {
+		tmp := os.Getenv("adminUname")
+		mu.RLock()
+		n := len(userData)
+		c.HTML(http.StatusFound, "admin.html", gin.H{
+			"username" : tmp,
+			"total": n,
+			"Users": usernameToLinks,
+		})
+		mu.RUnlock()
+	}else {
+		c.String(http.StatusUnauthorized, "Unauthorized")
+	}
+}
+
+func adminDownload(c *gin.Context){
+	pname := c.Param("uname")
+	link := c.Param("ulink")
+	uname, err0 := c.Cookie("username")
+	upass, err1 := c.Cookie("password")
+	if err0 != nil || err1 != nil || !isAdmin(uname, upass){
+		c.String(http.StatusUnauthorized ,"Unauthorized")
+		return
+	}
+	path := "users/" + pname + "/" + link
+	if _, err := os.Stat(path); err != nil{
+		c.String(http.StatusNotFound,"File not found.")
+	}else {
+		c.File(path)
+	}
+}
+
 func main() {
 	router := gin.Default()
 	router.LoadHTMLGlob("static/*")
@@ -207,6 +263,8 @@ func main() {
 	router.POST("/upload", upload)
 	router.GET("/user/:filename", download)
 	router.POST("/delete/:filename", deleteFile)
+	router.GET("/admin", adminPage)
+	router.GET("/admin/:uname/:ulink", adminDownload)
 	router.Run()
 }
 

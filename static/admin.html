@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin</title>
+</head>
+<body>
+    <a href="/logout">Logout</a>
+    <h1>{{ .username }}</h1>
+    <p>Total Users: {{ .total }}</p>
+    {{ if .Users }}
+        <ul>
+            {{ range $uname, $links := .Users }}
+                <li>
+                    {{ $uname }}
+                    <ul>
+                        {{ range $links }}
+                            <li><a href="admin/{{ $uname }}/{{ . }}">{{ . }}</a></li>
+                        {{ end }}
+                    </ul>
+                </li>
+            {{ end }}
+        </ul>
+    {{ else }}
+        <p>No users found.</p>
+    {{ end }}
+</body>
+</html>
