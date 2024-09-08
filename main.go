@@ -265,6 +265,9 @@ func main() {
 	router.POST("/delete/:filename", deleteFile)
 	router.GET("/admin", adminPage)
 	router.GET("/admin/:uname/:ulink", adminDownload)
+	router.GET("/form.css", func(c *gin.Context){
+		c.File("static/form.css")
+	})
 	router.Run()
 }
 
